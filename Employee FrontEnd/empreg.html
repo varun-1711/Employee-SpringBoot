@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+    table, th, td { border: 1px solid black; padding: 10px; }
+    th { background: #f2f2f2; }
+    input, button { margin: 5px; padding: 6px; }
+    .btn { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Employee Management</h1>
+
+  <!-- Add Employee Form -->
+  <h2>Add / Register Employee</h2>
+  <form id="empForm">
+    <input type="text" id="name" placeholder="Enter name" required>
+    <input type="text" id="roll" placeholder="Enter roll" required>
+    <input type="number" id="salary" placeholder="Enter salary" required>
+    <button type="submit" class="btn">Add Employee</button>
+  </form>
+
+  <button onclick="getEmployees()" class="btn">View All Employees</button>
+  <button onclick="clearAll()" class="btn">Clear All</button>
+
+  <!-- Employee Table -->
+  <table id="empTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Roll</th>
+        <th>Salary</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const BASE_URL = "http://localhost:8080";
+
+    // Add Employee
+    document.getElementById("empForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const emp = {
+        name: document.getElementById("name").value,
+        roll: document.getElementById("roll").value,
+        salary: parseInt(document.getElementById("salary").value)
+      };
+
+      fetch(BASE_URL + "/courses/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emp)
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        getEmployees();
+      })
+      .catch(err => console.error(err));
+    });
+
+    // Fetch All Employees
+    function getEmployees() {
+      fetch(BASE_URL + "/details")
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector("#empTable tbody");
+          tbody.innerHTML = "";
+          data.forEach(emp => {
+            const row = `<tr>
+              <td>${emp.id}</td>
+              <td>${emp.name}</td>
+              <td>${emp.roll}</td>
+              <td>${emp.salary}</td>
+              <td>
+                <button onclick="deleteEmp(${emp.id})">Delete</button>
+                <button onclick="updateEmp(${emp.id})">Update</button>
+              </td>
+            </tr>`;
+            tbody.innerHTML += row;
+          });
+        })
+        .catch(err => console.error(err));
+    }
+
+    // Delete Employee
+    function deleteEmp(id) {
+      fetch(BASE_URL + "/details/" + id, { method: "DELETE" })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          getEmployees();
+        })
+        .catch(err => console.error(err));
+    }
+
+    // Update Employee (simple prompt-based)
+    function updateEmp(id) {
+      const name = prompt("Enter new name:");
+      const roll = prompt("Enter new roll:");
+      const salary = prompt("Enter new salary:");
+
+      const emp = { id, name, roll, salary: parseInt(salary) };
+
+      fetch(BASE_URL + "/details", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emp)
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        getEmployees();
+      })
+      .catch(err => console.error(err));
+    }
+
+    // Clear All Employees
+    function clearAll() {
+      if (confirm("Are you sure you want to delete all employees?")) {
+        fetch(BASE_URL + "/details/clear", { method: "DELETE" })
+          .then(res => res.text())
+          .then(msg => {
+            alert(msg);
+            getEmployees();
+          })
+          .catch(err => console.error(err));
+      }
+    }
+  </script>
+</body>
+</html>
